@@ -26,13 +26,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     <meta name='mobile-web-app-capable' content='yes'>
     <meta name='apple-mobile-web-app-capable' content='yes'>
 
-    <title>Mirroring</title>
+    <title>geopose</title>
 
     <link href='css/common.css' rel='stylesheet'></link>
 
     <script src='../build/webxr-polyfill.js'></script>
     <script src='js/gl-matrix-min.js'></script>
-    <script src='js/cottontail.js'></script>
+    <!-- <script src='js/cottontail.js'></script> -->
     <script>
         window.polyfill = new WebXRPolyfill();
     </script>
@@ -41,19 +41,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   <body>
     <header>
       <details open>
-        <summary>Mirroring</summary>
+        <summary>Geopose</summary>
         <p>
-          This sample demonstrates how to present a simple WebGL scene to a
-          XRDevice while mirroring to a context. The scene is not rendered to
-          the page prior to XR presentation. Mirroring has no effect on mobile
-          or standalone devices.
+          This sample demonstrates how to use the Geopose API to obtain
+          location information in an XR session.
         </p>
       </details>
     </header>
     <main style='text-align: center;'>
       <p>Click 'Enter XR' to see content</p>
     </main>
-    <script>
+    <script type="module">
+      import {WebXRButton} from './js/util/webxr-button.js';
+      import {Scene} from './js/render/scenes/scene.js';
+      import {Renderer, createWebGLContext} from './js/render/core/renderer.js';
+      import {Gltf2Node} from './js/render/nodes/gltf2.js';
       (function () {
       'use strict';
 
@@ -64,40 +66,36 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       // WebGL scene globals.
       let gl = null;
       let renderer = null;
-      let scene = new CubeSeaScene();
+      let scene = new Scene();
+      let solarSystem = new Gltf2Node({url: 'models/space.gltf'});
+      solarSystem.scale = [0.1, 0.1, 0.1];
+      scene.addNode(solarSystem);
+  
 
       function initXR() {
         xrButton = new XRDeviceButton({
           onRequestSession: onRequestSession,
-          onEndSession: onEndSession
+          onEndSession: onEndSession,
+          textEnterXRTitle: "START AR",
         });
         document.querySelector('header').appendChild(xrButton.domElement);
 
         if (navigator.xr) {
-          navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+          navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
             xrButton.enabled = supported;
           });
         }
       }
 
       function onRequestSession(device) {
-        // In order to mirror an immersive session, we must provide
-        // an XRPresentationContext, which indicates the canvas that will
-        // contain results of the session's rendering.
-        let mirrorCanvas = document.createElement('canvas');
-        let ctx = mirrorCanvas.getContext('xrpresent');
-        mirrorCanvas.setAttribute('id', 'output-canvas');
-
-        // Add the canvas to the document.
-        document.body.appendChild(mirrorCanvas);
-
         // Providing an outputContext when requesting an immersive session
         // indicates that it should be used as the mirror destination.
-        navigator.xr.requestSession('immersive-vr').then(onSessionStarted);
+        navigator.xr.requestSession('immersive-ar').then(onSessionStarted);
       }
 
       function onSessionStarted(session) {
         xrButton.setSession(session);
+        console.log('Session started');
 
         session.addEventListener('end', onSessionEnded);
 
@@ -113,17 +111,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         session.baseLayer = new XRWebGLLayer(session, gl);
 
-        // Set the mirroring context to be the same size as one eye on the
-        // layer context.
-        let outputCanvas = document.querySelector('#output-canvas');
-        outputCanvas.width = session.baseLayer.framebufferWidth / 2;
-        outputCanvas.height = session.baseLayer.framebufferHeight;
-
-        // session.requestFrameOfReference('eye-level').then((frameOfRef) => {
-        //   xrFrameOfRef = frameOfRef;
-
-        //   session.requestAnimationFrame(onXRFrame);
-        // });
+        session.requestReferenceSpace('geo').then((frameOfRef) => {
+          xrFrameOfRef = frameOfRef;
+          console.log(scene);
+          session.requestAnimationFrame(onXRFrame);
+        });
       }
 
       function onEndSession(session) {
@@ -152,6 +144,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
         let pose = frame.getViewerPose(xrFrameOfRef);
 
+        console.log('Geopose data:', pose);
+
         if (pose) {
           for (let view of frame.views) {
             let viewport = session.baseLayer.getViewport(view);
@@ -161,6 +155,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             scene.draw(view.projectionMatrix, pose.getViewMatrix(view));
           }
         }
+
 
         // Per-frame scene teardown. Nothing WebXR specific here.
         scene.endFrame();

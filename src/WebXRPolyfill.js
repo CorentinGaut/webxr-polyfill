@@ -120,6 +120,7 @@ host this content on a secure origin for the best user experience.
   _patchNavigatorXR() {
     // Request a polyfilled XRDevice.
     let devicePromise = requestXRDevice(this.global, this.config);
+    console.log('updates codedddd');
 
     // Create `navigator.xr` instance populated with the XRDevice promise
     // requested above. The promise resolve will be monitored by the XR object.

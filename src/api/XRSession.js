@@ -46,6 +46,13 @@ class XRViewSpace extends XRSpace {
   }
 }
 
+class GeoXRReferenceSpace extends XRReferenceSpace {
+  constructor(geopose) {
+    super('geo');
+    this.geopose = geopose;
+  }
+}
+
 export default class XRSession extends EventTarget {
   /**
    * @param {XRDevice} device
@@ -303,6 +310,11 @@ export default class XRSession extends EventTarget {
   async requestReferenceSpace(type) {
     if (this[PRIVATE].ended) {
       return;
+    }
+
+    if (type === 'geo') {
+      console.log('Requesting geo reference space');
+      return new GeoXRReferenceSpace(geopose);
     }
 
     if (!XRReferenceSpaceTypes.includes(type)) {

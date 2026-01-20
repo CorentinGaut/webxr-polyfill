@@ -1,3 +1,12 @@
+/* eslint-disable linebreak-style */
+/* eslint-disable require-jsdoc */
+/* eslint-disable max-len */
+/* eslint-disable key-spacing */
+/* eslint-disable comma-dangle */
+/* eslint-disable linebreak-style */
+/* eslint-disable semi */
+/* eslint-disable no-undef */
+/* eslint-disable no-trailing-spaces */
 /*
  * Copyright 2017 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +34,8 @@ export const XRReferenceSpaceTypes = [
   'local',
   'local-floor',
   'bounded-floor',
-  'unbounded' // TODO: 'unbounded' is not supported by the polyfill.
+  'unbounded', // TODO: 'unbounded' is not supported by the polyfill.
+  'geo'
 ];
 
 /**
